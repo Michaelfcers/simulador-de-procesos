@@ -1,0 +1,42 @@
+---
+import ProfesorLayout from '../../layouts/ProfesorLayout.astro';
+import { NewGameFlow } from '../../components/profesor/NewGameFlow';
+import { checkProfessorAuth } from '../../lib/auth';
+import { SessionController } from '../../components/profesor/SessionController';
+import { RequestsHub } from '../../components/profesor/RequestsHub';
+import { EvaluationForm } from '../../components/profesor/EvaluationForm';
+import { TeamsMonitor } from '../../components/profesor/TeamsMonitor';
+import { ProfessorDashboard } from '../../components/profesor/ProfessorDashboard';
+import { supabase } from '../../lib/supabase';
+
+const auth = await checkProfessorAuth(Astro);
+if (auth.redirect) {
+  return Astro.redirect(auth.redirect);
+}
+
+const user = auth.user;
+
+// 1. Buscar si hay una sesión activa (la más reciente que no esté FINALIZADA)
+const { data: activeSession } = await supabase
+  .from('sessions')
+  .select('*, game_templates(name)')
+  .eq('professor_id', user.id)
+  .neq('status', 'FINALIZADO')
+  .order('created_at', { ascending: false })
+  .limit(1)
+  .single();
+---
+
+<ProfesorLayout title="Profesor | Dashboard" activePath="/profesor" user={user}>
+  <div class="max-w-7xl mx-auto pb-20">
+    {
+      activeSession ? (
+        <ProfessorDashboard client:load initialSession={activeSession} userId={user.id} />
+      ) : (
+        <section>
+          <NewGameFlow client:load professorId={user.id} />
+        </section>
+      )
+    }
+  </div>
+</ProfesorLayout>

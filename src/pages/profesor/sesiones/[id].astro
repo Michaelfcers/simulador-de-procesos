@@ -1,0 +1,35 @@
+---
+import ProfesorLayout from '../../../layouts/ProfesorLayout.astro';
+import { ProfessorDashboard } from '../../../components/profesor/ProfessorDashboard';
+import { supabase } from '../../../lib/supabase';
+import { checkProfessorAuth } from '../../../lib/auth';
+
+const auth = await checkProfessorAuth(Astro);
+if (auth.redirect) {
+  return Astro.redirect(auth.redirect);
+}
+
+const user = auth.user;
+const { id } = Astro.params;
+
+// Fetch session info
+const { data: session, error } = await supabase
+  .from('sessions')
+  .select('*, game_templates(name)')
+  .eq('id', id)
+  .single();
+
+if (error || !session) {
+  return Astro.redirect('/profesor');
+}
+---
+
+<ProfesorLayout
+  title={`Sesión ${session.join_code} | Profesor`}
+  activePath="/profesor/sesiones"
+  user={user}
+>
+  <div class="max-w-7xl mx-auto pb-10">
+    <ProfessorDashboard client:load initialSession={session} userId={user.id} />
+  </div>
+</ProfesorLayout>

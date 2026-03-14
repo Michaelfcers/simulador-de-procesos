@@ -1,0 +1,174 @@
+---
+import { supabase } from '../lib/supabase';
+
+let connectionEstablished = false;
+let tables = [];
+let errorMessage = null;
+
+try {
+  // Try to fetch tables from the public schema
+  // We use postgrest to get table names
+  const { data, error } = await supabase
+    .from('_rpc_get_tables') // This is a placeholder, let's use a more reliable way
+    .select('*')
+    .limit(1);
+
+  // Since we don't have a reliable way to list all tables without dynamic SQL/RPC,
+  // we'll try to query the information_schema or just check connection.
+  // A simple check is to query a table or just check if the client is configured.
+
+  // Real check: Try to fetch a record from a known table or just ping.
+  // Let's try to list tables using a trick or just checking connection results.
+
+  // Best way to check "connection" in Supabase (which is connectionless REST)
+  // is to perform a simple request.
+  const { data: health, error: healthError } = await supabase
+    .from('dummy_test_table')
+    .select('*')
+    .limit(1);
+
+  // If we get an error that is NOT a network error, it usually means
+  // we are connected but the table doesnt exist (which is fine for a connection test).
+  // If we get a 401/403, it's an auth issue (invalid key).
+
+  if (healthError && healthError.code === 'PGRST301') {
+    errorMessage = 'Error de autenticación: Verifica la clave ANON en el archivo .env';
+  } else if (healthError && healthError.message === 'fetch failed') {
+    errorMessage = 'Error de red: No se pudo contactar con Supabase';
+  } else {
+    connectionEstablished = true;
+
+    // Try to get table names from the database
+    // Note: This requires the user to have some tables or proper permissions
+    // We'll use a simple query to get table names if possible
+    const { data: tableData, error: tableError } = await supabase.rpc('get_tables'); // Custom RPC if it exists, otherwise we'll show a message
+
+    if (!tableError && tableData) {
+      tables = tableData.map((t) => t.name);
+    } else {
+      // Fallback: manually list some tables if it's a known schema or just say "Connected"
+      // In a real scenario, listing tables often requires an RPC or specific permissions.
+      // For now, if we reach here, the connection is good.
+      tables = ['Conexión exitosa', 'Tablas no listables sin RPC'];
+    }
+  }
+} catch (e) {
+  errorMessage = e.message;
+}
+---
+
+<div class="supabase-test card">
+  <h2>Supabase Connection</h2>
+
+  {
+    errorMessage ? (
+      <div class="status error">
+        <span class="icon">❌</span>
+        <p>{errorMessage}</p>
+      </div>
+    ) : (
+      <div class="status success">
+        <div class="established">
+          <span class="icon">✅</span>
+          <p>Conexión establecida</p>
+        </div>
+
+        <div class="tables-section">
+          <h3>Tablas detectadas:</h3>
+          {tables.length > 0 ? (
+            <ul>
+              {tables.map((table) => (
+                <li>
+                  <span class="check">✓</span> {table}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="no-tables">
+              Conectado, pero no se encontraron tablas públicas o no hay permisos para listarlas.
+            </p>
+          )}
+        </div>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 2rem;
+    max-width: 500px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  }
+
+  h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 1.5rem;
+  }
+
+  .status {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .established {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4ade80;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+
+  .error {
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .icon {
+    font-size: 1.25rem;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+  }
+
+  li {
+    color: rgba(255, 255, 255, 0.9);
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .check {
+    color: #4ade80;
+    font-weight: bold;
+  }
+
+  .no-tables {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+</style>

@@ -1,0 +1,146 @@
+---
+import ProfesorLayout from '../../../layouts/ProfesorLayout.astro';
+import { Play, LayoutTemplate, Search } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
+import { checkProfessorAuth } from '../../../lib/auth';
+
+const auth = await checkProfessorAuth(Astro);
+if (auth.redirect) {
+  return Astro.redirect(auth.redirect);
+}
+
+const user = auth.user;
+
+// Obtener todas las sesiones del profesor
+const { data: sessions, error } = await supabase
+  .from('sessions')
+  .select('*, game_templates(name)')
+  .eq('professor_id', user.id)
+  .order('created_at', { ascending: false });
+---
+
+<ProfesorLayout title="Sesiones | Profesor" activePath="/profesor/sesiones" user={user}>
+  <div class="max-w-6xl mx-auto">
+    <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Todas las Sesiones</h1>
+        <p class="text-slate-500 mt-2">Historial y administración de tus simulaciones.</p>
+      </div>
+      <a
+        href="/profesor"
+        class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors shadow-sm gap-2"
+      >
+        <Play size={18} />
+        Nueva Sesión
+      </a>
+    </header>
+
+    <!-- Search / Filter (Visual placeholder for now) -->
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+      <div class="relative flex-1">
+        <Search size={18} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Buscar por código (SOBRES-2026...)"
+          class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+        />
+      </div>
+      <select
+        class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <option>Todos los estados</option>
+        <option>Espera</option>
+        <option>En Curso</option>
+        <option>Finalizado</option>
+      </select>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50/50 border-b border-slate-100">
+              <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest"
+                >Código</th
+              >
+              <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest"
+                >Simulación</th
+              >
+              <th
+                class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-center"
+                >Estado</th
+              >
+              <th
+                class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-center"
+                >Fecha</th
+              >
+              <th
+                class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right"
+                >Acciones</th
+              >
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50 text-sm">
+            {
+              sessions && sessions.length > 0 ? (
+                sessions.map((session: any) => (
+                  <tr class="hover:bg-slate-50/50 transition-colors group">
+                    <td class="px-6 py-4">
+                      <span class="font-bold text-slate-900 tracking-tight uppercase">
+                        {session.join_code}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+                          <LayoutTemplate size={16} />
+                        </div>
+                        <span class="font-medium text-slate-700">
+                          {session.game_templates?.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span
+                        class={`inline-block px-3 py-1 rounded-full text-[11px] font-bold border uppercase ${
+                          session.status === 'ESPERA'
+                            ? 'bg-amber-50 text-amber-600 border-amber-200'
+                            : session.status === 'FINALIZADO'
+                              ? 'bg-slate-100 text-slate-500 border-slate-200'
+                              : 'bg-green-50 text-green-700 border-green-200'
+                        }`}
+                      >
+                        {session.status}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-center text-slate-500 font-medium">
+                      {new Date(session.created_at).toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <a
+                        href={`/profesor/sesiones/${session.id}`}
+                        class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-all shadow-sm"
+                      >
+                        Gestionar
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colspan="5" class="px-6 py-20 text-center text-slate-500 italic">
+                    No se encontraron sesiones. ¡Crea una nueva en el dashboard!
+                  </td>
+                </tr>
+              )
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</ProfesorLayout>

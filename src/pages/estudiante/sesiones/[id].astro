@@ -1,0 +1,44 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { StudentDashboard } from '../../../components/estudiante/StudentDashboard';
+import { supabase } from '../../../lib/supabase';
+
+const { id } = Astro.params;
+
+import { getActiveGuest } from '../../../lib/guestAuth';
+
+const { id } = Astro.params;
+
+// Obtener datos del invitado desde la BD (usando el device_token que es persistente)
+// Nota: en el lado del servidor necesitamos el token de las cookies o el cliente lo manejará.
+// Como el device_token está en localStorage (cliente), el componente de React es quien mejor lo maneja.
+// Pero para el SEO/Initial render, intentaremos buscarlo si tenemos una cookie de respaldo.
+
+const teamId = Astro.cookies.get('student-team-id')?.value;
+const teamName = Astro.cookies.get('student-team-name')?.value || 'Mi Equipo';
+
+// Obtener estado de la sesión desde la BD
+const { data: session } = await supabase
+  .from('sessions')
+  .select('*, game_templates(name)')
+  .eq('id', id)
+  .single();
+
+if (!session) {
+  return Astro.redirect('/estudiante');
+}
+---
+
+<DashboardLayout
+  title={`${teamName} | Simulador`}
+  role="estudiante"
+  userName={teamName}
+  sessionCode={session.join_code}
+>
+  <StudentDashboard
+    client:load
+    teamId={teamId || 'demo'}
+    sessionId={session.id}
+    initialStatus={session.status}
+  />
+</DashboardLayout>

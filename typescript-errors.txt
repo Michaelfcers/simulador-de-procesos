@@ -1,0 +1,4 @@
+src/components/profesor/LobbyManager.tsx(1,37): error TS1484: 'DragEndEvent' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/profesor/TemplateEditor.tsx(301,22): error TS2304: Cannot find name 'CustomSelect'.
+src/components/profesor/TemplateEditor.tsx(303,34): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/components/profesor/TemplateEditor.tsx(313,34): error TS2304: Cannot find name 'X'.

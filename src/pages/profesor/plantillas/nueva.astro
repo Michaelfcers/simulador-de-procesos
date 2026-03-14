@@ -1,0 +1,16 @@
+---
+import ProfesorLayout from '../../../layouts/ProfesorLayout.astro';
+import { TemplateEditor } from '../../../components/profesor/TemplateEditor';
+import { checkProfessorAuth } from '../../../lib/auth';
+
+const auth = await checkProfessorAuth(Astro);
+if (auth.redirect) {
+  return Astro.redirect(auth.redirect);
+}
+
+const user = auth.user;
+---
+
+<ProfesorLayout title="Nueva Plantilla | Profesor" activePath="/profesor/plantillas" user={user}>
+  <TemplateEditor client:load />
+</ProfesorLayout>

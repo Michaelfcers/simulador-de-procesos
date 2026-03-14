@@ -1,0 +1,33 @@
+---
+import ProfesorLayout from '../../layouts/ProfesorLayout.astro';
+import { Workflow, Settings } from 'lucide-react';
+import { checkProfessorAuth } from '../../lib/auth';
+
+const auth = await checkProfessorAuth(Astro);
+if (auth.redirect) {
+  return Astro.redirect(auth.redirect);
+}
+
+const user = auth.user;
+---
+
+<ProfesorLayout title="Procesos | Profesor" activePath="/profesor/procesos" user={user}>
+  <div class="max-w-4xl mx-auto h-[70vh] flex flex-col items-center justify-center text-center">
+    <div
+      class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-500"
+    >
+      <Workflow size={40} />
+    </div>
+    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Procesos y Fases</h1>
+    <p class="text-slate-500 mt-4 max-w-md">
+      Esta sección te permitirá definir el flujo de fabricación, las etapas de control de calidad y
+      los cuellos de botella para tus simulaciones.
+    </p>
+
+    <div
+      class="mt-8 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-indigo-700 text-sm font-medium"
+    >
+      🚧 Sección en construcción
+    </div>
+  </div>
+</ProfesorLayout>

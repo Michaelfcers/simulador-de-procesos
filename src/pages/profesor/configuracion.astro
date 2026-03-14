@@ -1,0 +1,33 @@
+---
+import ProfesorLayout from '../../layouts/ProfesorLayout.astro';
+import { Settings } from 'lucide-react';
+import { checkProfessorAuth } from '../../lib/auth';
+
+const auth = await checkProfessorAuth(Astro);
+if (auth.redirect) {
+  return Astro.redirect(auth.redirect);
+}
+
+const user = auth.user;
+---
+
+<ProfesorLayout title="Configuración | Profesor" activePath="/profesor/configuracion" user={user}>
+  <div class="max-w-4xl mx-auto h-[70vh] flex flex-col items-center justify-center text-center">
+    <div
+      class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-500"
+    >
+      <Settings size={40} />
+    </div>
+    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Configuración del Panel</h1>
+    <p class="text-slate-500 mt-4 max-w-md">
+      Administra tu perfil, cambia tu contraseña y configura las notificaciones de las simulaciones
+      en vivo.
+    </p>
+
+    <div
+      class="mt-8 p-4 bg-slate-100 border border-slate-200 rounded-2xl text-slate-600 text-sm font-medium"
+    >
+      🚧 Sección en construcción
+    </div>
+  </div>
+</ProfesorLayout>
